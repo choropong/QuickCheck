@@ -439,34 +439,24 @@
                     usernames.map(username => fetchPlayerData(username))
                 );
 
-                let validPlayers = playerDataList.filter(p => !p.error);
-
-                // ONLINE: 명령어일 경우 필터링
-                if (isOnlineCommand) {
-                    validPlayers = validPlayers.filter(p => isPlayerHighlighted(p.player, currentMode));
-                    if (validPlayers.length === 0) {
-                        resultsDiv.innerHTML = '<div class="error">❌ No highlighted players found</div>';
-                        searchBtn.disabled = false;
-                        return;
-                    }
-                }
-
-                if (validPlayers.length === 0) {
-                    resultsDiv.innerHTML = '<div class="error">❌ Player not found</div>';
+                // ONLINE: 명령어일 경우 강조된 플레이어 + 에러 유저 표시, 아니면 모두 표시
+                const playersToDisplay = isOnlineCommand 
+                    ? playerDataList.filter(p => p.error || isPlayerHighlighted(p.player, currentMode))
+                    : playerDataList;
+                
+                // 표시할 유효한 플레이어가 없으면 에러
+                const validToDisplay = playersToDisplay.filter(p => !p.error);
+                if (validToDisplay.length === 0) {
+                    const errorMsg = isOnlineCommand ? '❌ No highlighted players found' : '❌ Player not found';
+                    resultsDiv.innerHTML = `<div class="error">${errorMsg}</div>`;
                     searchBtn.disabled = false;
                     return;
                 }
-
-                // ONLINE: 명령어일 경우 강조된 플레이어만, 아니면 모두 표시
-                const playersToDisplay = isOnlineCommand 
-                    ? playerDataList.filter(p => !p.error && isPlayerHighlighted(p.player, currentMode))
-                    : playerDataList;
                 
                 // 표시할 플레이어(에러 제외)와 전체 플레이어(에러 포함)로 lengths 계산
-                const validForLengths = playersToDisplay.filter(p => !p.error);
                 const allUsernames = playersToDisplay.map(p => p.username);
-                const lengths = validForLengths.length > 0 
-                    ? calculateMaxLengths(validForLengths, currentMode, allUsernames)
+                const lengths = validToDisplay.length > 0 
+                    ? calculateMaxLengths(validToDisplay, currentMode, allUsernames)
                     : { actualMaxNameLength: Math.max(...allUsernames.map(n => n.length)), maxRankLength: 4, maxBwLength: 1, maxFkLength: 1, maxFkdrLength: 4 };
                 
                 const results = playersToDisplay.map(pData => {
