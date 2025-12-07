@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypixel Stats Checker</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+        
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://github.com/IdreesInc/Minecraft-Font/raw/master/Minecraft-Regular.otf') format('opentype');
+            font-style: normal;
+            font-weight: normal;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', sans-serif;
+            background: #171717;
+            color: #e5e5e5;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px 20px 20px;
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            display: none;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 12px 28px;
+            background: #1f1f1f;
+            color: #a0a0a0;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-btn:hover {
+            background: #252525;
+            color: #e5e5e5;
+            border-color: #3a3a3a;
+        }
+
+        .mode-btn.active {
+            background: #ffffff;
+            color: #171717;
+            border-color: #ffffff;
+            font-weight: 600;
+        }
+
+        .input-section {
+            background: #1f1f1f;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            border: 1px solid #2a2a2a;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 15px;
+            font-weight: 400;
+            flex: 1;
+            min-width: 250px;
+            padding: 14px 18px;
+            background: #171717;
+            color: #e5e5e5;
+            border: 1px solid #2a2a2a;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #3a3a3a;
+            background: #1a1a1a;
+        }
+
+        input[type="text"]::placeholder {
+            color: #6a6a6a;
+            font-size: 14px;
+        }
+
+        .search-btn {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            padding: 14px 36px;
+            background: #ffffff;
+            color: #171717;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .search-btn:hover {
+            background: #f5f5f5;
+        }
+
+        .search-btn:active {
+            transform: scale(0.98);
+        }
+
+        .search-btn:disabled {
+            background: #2a2a2a;
+            color: #6a6a6a;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            background: #1f1f1f;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #2a2a2a;
+            min-height: auto;
+        }
+
+        .stats-container {
+            font-family: 'Minecraft', 'Courier New', 'Consolas', monospace;
+            font-size: clamp(14px, 2vw, 20px);
+            font-weight: normal;
+            font-style: normal;
+            line-height: 2.2;
+            white-space: pre;
+            overflow-x: auto;
+            color: #e5e5e5;
+        }
+
+        .player-row {
+            padding: 0;
+            margin: 0;
+            background: none;
+            border-radius: 0;
+        }
+
+        .loading {
+            font-family: 'Pretendard', sans-serif;
+            text-align: center;
+            color: #a0a0a0;
+            font-size: 16px;
+            font-weight: 500;
+            padding: 50px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .error {
+            font-family: 'Pretendard', sans-serif;
+            color: #e85d5d;
+            text-align: center;
+            padding: 20px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .info-text {
+            font-family: 'Pretendard', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        /* Minecraft color codes */
+        .mc-blue { color: #5555FF; }
+        .mc-cyan { color: #55FFFF; }
+        .mc-green { color: #55FF55; }
+        .mc-yellow { color: #FFFF55; }
+        .mc-red { color: #FF5555; }
+        .mc-magenta { color: #FF55FF; }
+        .mc-gold { color: #FFAA00; }
+        .mc-aqua { color: #55FFFF; }
+        .mc-lime { color: #7FFF00; }
+        .mc-orange { color: #FF8C00; }
+        .mc-pink { color: #FF69B4; }
+        .mc-gray { color: #AAAAAA; }
+        .mc-dark-gray { color: #555555; }
+        .mc-white { color: #FFFFFF; }
+
+        footer {
+            font-family: 'Pretendard', sans-serif;
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            font-size: 12px;
+            font-weight: 400;
+            color: #5a5a5a;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+
+            .subtitle {
+                font-size: 13px;
+            }
+
+            .mode-btn {
+                font-size: 12px;
+                padding: 12px 20px;
+            }
+
+            input[type="text"] {
+                font-size: 14px;
+                min-width: 100%;
+            }
+
+            .search-btn {
+                font-size: 15px;
+                width: 100%;
+            }
+
+            .stats-container {
+                font-size: 12px;
+            }
+        }
+
+        .hint {
+            font-family: 'Pretendard', sans-serif;
+            background: #1a1a1a;
+            border-left: 2px solid #3a3a3a;
+            padding: 14px 16px;
+            margin-top: 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 400;
+            color: #8a8a8a;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>QuickCheck</h1>
+            <div class="subtitle">Bedwars • Build Battle • Speed Builders</div>
+        </header>
+
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="bedwars">Bedwars</button>
+            <button class="mode-btn" data-mode="buildBattle">Build Battle</button>
+            <button class="mode-btn" data-mode="bbScore">BB Score</button>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="usernameInput" 
+                    placeholder="Enter Minecraft username (separate multiple with commas or spaces)"
+                    autocomplete="off"
+                >
+                <button class="search-btn" id="searchBtn">Search</button>
+            </div>
+            <div class="hint">
+                💡 Tip: To check multiple players at once, separate usernames with commas or spaces!<br>
+                Example: Technoblade, Dream, Grian
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div id="results" class="stats-container">
+                <div style="text-align: center; color: #666; padding: 50px; font-family: 'Pretendard', sans-serif;">
+                    Enter a player's username and click the Search button
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Created with ❤ for Hypixel Players<br>
+            Not affiliated with Hypixel or Mojang
+        </footer>
+    </div>
+
+    <script>
+        const HYPIXEL_API_KEY = '9431f378-3e25-4290-9e44-1042a7e81110';
+        let currentMode = 'bedwars';
+
+        // Mode selection
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentMode = btn.dataset.mode;
+            });
+        });
+
+        // Enter key support
+        document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('searchBtn').click();
+            }
+        });
+
+        // Search button
+        document.getElementById('searchBtn').addEventListener('click', async () => {
+            const input = document.getElementById('usernameInput').value.trim();
+            if (!input) return;
+
+            // ONLINE: 명령어 감지
+            const isOnlineCommand = input.toUpperCase().startsWith('ONLINE:');
+            const cleanInput = isOnlineCommand ? input.substring(7).trim() : input;
+
+            const usernames = cleanInput.split(/[\s,]+/).map(u => u.trim()).filter(u => u);
+            if (usernames.length === 0) return;
+
+            await searchPlayers(usernames, isOnlineCommand);
+        });
+
+        // 플레이어가 강조 대상인지 확인 (닉네임이 실제로 강조되는 경우)
+        function isPlayerHighlighted(player, channelType) {
+            if (channelType === 'bedwars') {
+                const bedwars = player.stats?.Bedwars || {};
+                const bwLevel = getBedwarsLevel(bedwars.Experience);
+                const fk = bedwars.final_kills_bedwars || 0;
+                const fd = bedwars.final_deaths_bedwars || 1;
+                const fkdr = parseFloat((fk / fd).toFixed(2));
+                
+                // 닉네임 강조 로직과 동일: 2개 이상의 스텟이 기준을 만족해야 함
+                const colorLevels = [
+                    bwLevel >= 1500 ? 6 : bwLevel >= 1000 ? 5 : bwLevel >= 750 ? 4 : bwLevel >= 500 ? 3 : bwLevel >= 250 ? 2 : bwLevel >= 100 ? 1 : 0,
+                    fk >= 40000 ? 6 : fk >= 25000 ? 5 : fk >= 10000 ? 4 : fk >= 5000 ? 3 : fk >= 2000 ? 2 : fk >= 1000 ? 1 : 0,
+                    fkdr >= 15 ? 6 : fkdr >= 10 ? 5 : fkdr >= 7 ? 4 : fkdr >= 5 ? 3 : fkdr >= 2 ? 2 : fkdr >= 1 ? 1 : 0
+                ].filter(level => level > 0);
+                
+                // 2개 이상의 스텟이 레벨 1 이상이어야 닉네임 강조됨
+                return colorLevels.length >= 2;
+            } else if (channelType === 'buildBattle') {
+                const buildBattle = player.stats?.BuildBattle;
+                const soloWins = buildBattle?.wins_solo_normal || 0;
+                const teamWins = buildBattle?.wins_teams_normal || 0;
+                const proWins = buildBattle?.wins_solo_pro || 0;
+                const guessWins = buildBattle?.wins_guess_the_build || 0;
+                const totalBBWins = buildBattle?.wins || 0;
+                const knownModeWins = soloWins + teamWins + proWins + guessWins;
+                const speedBuilderWins = Math.max(0, totalBBWins - knownModeWins);
+                const totalWins = soloWins + teamWins + proWins;
+                
+                // 최소 아쿠아(50) 이상인지 확인
+                return totalWins >= 50 || guessWins >= 50 || speedBuilderWins >= 50;
+            } else if (channelType === 'bbScore') {
+                const buildBattle = player.stats?.BuildBattle;
+                const score = buildBattle?.score || 0;
+                const soloWins = buildBattle?.wins_solo_normal || 0;
+                const teamWins = buildBattle?.wins_teams_normal || 0;
+                const proWins = buildBattle?.wins_solo_pro || 0;
+                const guessWins = buildBattle?.wins_guess_the_build || 0;
+                const totalBBWins = buildBattle?.wins || 0;
+                const knownModeWins = soloWins + teamWins + proWins + guessWins;
+                const speedBuilderWins = Math.max(0, totalBBWins - knownModeWins);
+                
+                // 최소 아쿠아(10000 또는 50) 이상인지 확인
+                return score >= 10000 || speedBuilderWins >= 50;
+            }
+            
+            return false;
+        }
+
+        async function searchPlayers(usernames, isOnlineCommand = false) {
+            const resultsDiv = document.getElementById('results');
+            const searchBtn = document.getElementById('searchBtn');
+            
+            searchBtn.disabled = true;
+            resultsDiv.innerHTML = '<div class="loading">⏳ Loading data...</div>';
+
+            const modeButtons = document.querySelectorAll('.mode-btn');
+            const currentMode = Array.from(modeButtons).find(btn => btn.classList.contains('active')).dataset.mode;
+
+            try {
+                const playerDataList = await Promise.all(
+                    usernames.map(username => fetchPlayerData(username))
+                );
+
+                let validPlayers = playerDataList.filter(p => !p.error);
+
+                // ONLINE: 명령어일 경우 필터링
+                if (isOnlineCommand) {
+                    validPlayers = validPlayers.filter(p => isPlayerHighlighted(p.player, currentMode));
+                    if (validPlayers.length === 0) {
+                        resultsDiv.innerHTML = '<div class="error">❌ No highlighted players found</div>';
+                        searchBtn.disabled = false;
+                        return;
+                    }
+                }
+
+                if (validPlayers.length === 0) {
+                    resultsDiv.innerHTML = '<div class="error">❌ Player not found</div>';
+                    searchBtn.disabled = false;
+                    return;
+                }
+
+                const lengths = calculateMaxLengths(validPlayers, currentMode);
+                
+                // ONLINE: 명령어일 경우 validPlayers만 표시, 아니면 모두 표시
+                const playersToDisplay = isOnlineCommand 
+                    ? playerDataList.filter(p => !p.error && isPlayerHighlighted(p.player, currentMode))
+                    : playerDataList;
+                
+                const results = playersToDisplay.map(pData => {
+                    if (pData.error) return `<div class="player-row">${escapeHtml(pData.username)}: ❌</div>`;
+                    
+                    const nameLength = usernames.length > 1 ? lengths.actualMaxNameLength : pData.username.length;
+
+                    if (currentMode === 'bbScore') {
+                        return formatBBScoreStats(pData.username, pData.player, nameLength, lengths.maxScoreLength, lengths.maxSbLength);
+                    } else if (currentMode === 'buildBattle') {
+                        return formatBuildBattleStats(pData.username, pData.player, nameLength, lengths.maxBbLength, lengths.maxGtbLength, lengths.maxSbLength);
+                    } else {
+                        return formatPlayerStats(pData.username, pData.player, nameLength, lengths.maxRankLength, lengths.maxBwLength, lengths.maxFkLength, lengths.maxFkdrLength);
+                    }
+                });
+
+                resultsDiv.innerHTML = results.join('');
+                
+                // 결과 수에 따라 박스 높이 조절
+                const resultCount = results.length;
+                const resultsSection = document.querySelector('.results-section');
+                const lineHeight = 2.2; // CSS의 line-height와 동일
+                const fontSize = parseFloat(getComputedStyle(resultsDiv).fontSize);
+                const calculatedHeight = (resultCount * fontSize * lineHeight) + 60; // 60px는 패딩
+                resultsSection.style.minHeight = Math.max(calculatedHeight, 150) + 'px';
+            } catch (error) {
+                resultsDiv.innerHTML = '<div class="error">❌ An error occurred: ' + error.message + '</div>';
+            }
+
+            searchBtn.disabled = false;
+        }
+
+        async function fetchPlayerData(username) {
+            try {
+                const uuidData = await getUUID(username);
+                if (!uuidData) return { error: true, username };
+                
+                const player = await getHypixelStats(uuidData.id);
+                if (!player) return { error: true, username: uuidData.name };
+                
+                return { error: false, username: uuidData.name, player };
+            } catch (error) {
+                return { error: true, username };
+            }
+        }
+
+        async function getUUID(username) {
+            try {
+                console.log('Fetching UUID for:', username);
+                
+                // Vercel/Netlify Functions 호환 (쿼리 파라미터 방식도 지원)
+                let response;
+                try {
+                    response = await fetch(`/api/uuid?username=${username}`);
+                } catch (e) {
+                    // Path 방식으로 재시도 (로컬 server.js용)
+                    response = await fetch(`/api/uuid/${username}`);
+                }
+                
+                if (!response.ok) {
+                    console.log('UUID fetch failed:', response.status);
+                    return null;
+                }
+                
+                const data = await response.json();
+                console.log('UUID data:', data);
+                
+                if (data && data.id && data.name) {
+                    return { id: data.id, name: data.name };
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('getUUID error:', error);
+                return null;
+            }
+        }
+
+        async function getHypixelStats(uuid) {
+            try {
+                console.log('Fetching Hypixel stats for:', uuid);
+                
+                // Vercel/Netlify Functions 호환 (쿼리 파라미터 방식도 지원)
+                let response;
+                try {
+                    response = await fetch(`/api/player?uuid=${uuid}`);
+                } catch (e) {
+                    // Path 방식으로 재시도 (로컬 server.js용)
+                    response = await fetch(`/api/player/${uuid}`);
+                }
+                
+                if (!response.ok) {
+                    console.log('Hypixel fetch failed:', response.status);
+                    return null;
+                }
+                
+                const data = await response.json();
+                console.log('Hypixel data received:', data ? 'success' : 'null');
+                
+                if (data && data.player) {
+                    return data.player;
+                }
+                
+                return null;
+            } catch (error) {
+                console.error('getHypixelStats error:', error);
+                return null;
+            }
+        }
+
+        function getBedwarsLevel(exp) {
+            const xp = exp || 0;
+            const levelXP = [500, 1000, 2000, 3500];
+            let level = 0;
+            let remaining = xp;
+            
+            while (remaining > 0) {
+                const levelInPrestige = level % 100;
+                let xpNeeded;
+                if (levelInPrestige < 4) {
+                    xpNeeded = levelXP[levelInPrestige];
+                } else {
+                    xpNeeded = 5000;
+                }
+                
+                if (remaining >= xpNeeded) {
+                    remaining -= xpNeeded;
+                    level++;
+                } else {
+                    break;
+                }
+            }
+            
+            return level;
+        }
+
+        function getRankDisplay(player) {
+            if (!player) return 'None';
+            
+            if (player.rank) {
+                const rank = player.rank;
+                if (rank === 'ADMIN' || rank === 'MODERATOR' || rank === 'HELPER' || rank === 'BUILD_TEAM') {
+                    return 'STAFF';
+                }
+                if (rank === 'YOUTUBER' || rank === 'PIG+++') {
+                    return 'YT';
+                }
+                if (rank !== 'NORMAL') {
+                    return rank;
+                }
+            }
+            
+            if (player.monthlyPackageRank === 'SUPERSTAR') return 'MVP++';
+            if (player.newPackageRank) return player.newPackageRank.replace('_PLUS', '+');
+            if (player.packageRank) return player.packageRank.replace('_PLUS', '+');
+            return 'None';
+        }
+
+        function getColoredRank(rank, player) {
+            const gray = 'mc-gray';
+            const green = 'mc-green';
+            const aqua = 'mc-aqua';
+            const gold = 'mc-gold';
+            const red = 'mc-red';
+            
+            const plusColor = player?.rankPlusColor || 'RED';
+            const plusClass = plusColor === 'RED' ? red : (plusColor === 'GOLD' ? gold : red);
+            
+            const mvpColor = player?.monthlyRankColor || 'GOLD';
+            const mvpClass = mvpColor === 'AQUA' ? aqua : gold;
+            
+            switch(rank) {
+                case 'None':
+                    return `<span class="${gray}">None</span>`;
+                case 'VIP':
+                    return `<span class="${green}">VIP</span>`;
+                case 'VIP+':
+                    return `<span class="${green}">VIP</span><span class="${gold}">+</span>`;
+                case 'MVP':
+                    return `<span class="${aqua}">MVP</span>`;
+                case 'MVP+':
+                    return `<span class="${aqua}">MVP</span><span class="${plusClass}">+</span>`;
+                case 'MVP++':
+                    return `<span class="${mvpClass}">MVP</span><span class="${plusClass}">++</span>`;
+                case 'YT':
+                    return `<span class="${red}">YT</span>`;
+                case 'STAFF':
+                    return `<span class="${red}">STAFF</span>`;
+                default:
+                    return `<span class="${gray}">${rank}</span>`;
+            }
+        }
+
+        function formatPlayerStats(username, player, maxNameLength, maxRankLength, maxBwLength, maxFkLength, maxFkdrLength) {
+            const bedwars = player.stats?.Bedwars || {};
+            const bwLevel = getBedwarsLevel(bedwars.Experience);
+            const fk = bedwars.final_kills_bedwars || 0;
+            const fd = bedwars.final_deaths_bedwars || 1;
+            const fkdr = parseFloat((fk / fd).toFixed(2));
+            const rank = getRankDisplay(player);
+            const coloredRank = getColoredRank(rank, player);
+            
+            const nameField = username.padEnd(maxNameLength, ' ');
+            const bwField = bwLevel.toString().padStart(maxBwLength, ' ');
+            const fkField = fk.toLocaleString('en-US').padStart(maxFkLength, ' ');
+            const fkdrField = fkdr.toFixed(2).padStart(maxFkdrLength, ' ');
+            
+            function getColorForStat(bwLv, fkVal, fkdrVal) {
+                const bwColor = bwLv >= 1500 ? 'mc-pink' :
+                                bwLv >= 1000 ? 'mc-red' :
+                                bwLv >= 750 ? 'mc-orange' :
+                                bwLv >= 500 ? 'mc-yellow' :
+                                bwLv >= 250 ? 'mc-lime' :
+                                bwLv >= 100 ? 'mc-aqua' : '';
+                
+                const fkColor = fkVal >= 40000 ? 'mc-pink' :
+                                fkVal >= 25000 ? 'mc-red' :
+                                fkVal >= 10000 ? 'mc-orange' :
+                                fkVal >= 5000 ? 'mc-yellow' :
+                                fkVal >= 2000 ? 'mc-lime' :
+                                fkVal >= 1000 ? 'mc-aqua' : '';
+                
+                const fkdrColor = fkdrVal >= 15 ? 'mc-pink' :
+                                  fkdrVal >= 10 ? 'mc-red' :
+                                  fkdrVal >= 7 ? 'mc-orange' :
+                                  fkdrVal >= 5 ? 'mc-yellow' :
+                                  fkdrVal >= 2 ? 'mc-lime' :
+                                  fkdrVal >= 1 ? 'mc-aqua' : '';
+                
+                return { bwColor, fkColor, fkdrColor };
+            }
+            
+            function getNameColor(bwLv, fkVal, fkdrVal) {
+                const colorLevels = [
+                    bwLv >= 1500 ? 6 : bwLv >= 1000 ? 5 : bwLv >= 750 ? 4 : bwLv >= 500 ? 3 : bwLv >= 250 ? 2 : bwLv >= 100 ? 1 : 0,
+                    fkVal >= 40000 ? 6 : fkVal >= 25000 ? 5 : fkVal >= 10000 ? 4 : fkVal >= 5000 ? 3 : fkVal >= 2000 ? 2 : fkVal >= 1000 ? 1 : 0,
+                    fkdrVal >= 15 ? 6 : fkdrVal >= 10 ? 5 : fkdrVal >= 7 ? 4 : fkdrVal >= 5 ? 3 : fkdrVal >= 2 ? 2 : fkdrVal >= 1 ? 1 : 0
+                ].filter(level => level > 0).sort((a, b) => b - a);
+
+                if (colorLevels.length === 0) return '';
+
+                const highestLevel = colorLevels[0];
+                const countOfHighest = colorLevels.filter(level => level === highestLevel).length;
+
+                let targetLevel = 0;
+                if (countOfHighest >= 2) {
+                    targetLevel = highestLevel;
+                } else {
+                    const uniqueLevels = [...new Set(colorLevels)];
+                    if (uniqueLevels.length >= 2) {
+                        targetLevel = uniqueLevels[1];
+                    } else {
+                        targetLevel = uniqueLevels[0];
+                    }
+                }
+                
+                if (targetLevel > 0) {
+                    const colorMap = ['', 'mc-aqua', 'mc-lime', 'mc-yellow', 'mc-orange', 'mc-red', 'mc-pink'];
+                    return colorMap[targetLevel];
+                }
+                
+                return '';
+            }
+            
+            const { bwColor, fkColor, fkdrColor } = getColorForStat(bwLevel, fk, fkdr);
+            const nameColor = getNameColor(bwLevel, fk, fkdr);
+            
+            const bwPart = bwColor ? `<span class="${bwColor}">${bwField}</span>` : bwField;
+            const fkPart = fkColor ? `<span class="${fkColor}">${fkField}</span>` : fkField;
+            const fkdrPart = fkdrColor ? `<span class="${fkdrColor}">${fkdrField}</span>` : fkdrField;
+            const namePart = nameColor ? `<span class="${nameColor}">${nameField}</span>` : nameField;
+            
+            const rankPadding = '&nbsp;'.repeat(Math.max(0, maxRankLength - rank.length));
+            
+            return `<div class="player-row">${namePart} | ${coloredRank}${rankPadding} | ${bwPart}★ | FK ${fkPart} | FKDR ${fkdrPart}</div>`;
+        }
+
+        function formatBuildBattleStats(username, player, maxNameLength, maxBbLength, maxGtbLength, maxSbLength) {
+            const buildBattle = player.stats?.BuildBattle;
+            const soloWins = buildBattle?.wins_solo_normal || 0;
+            const teamWins = buildBattle?.wins_teams_normal || 0;
+            const proWins = buildBattle?.wins_solo_pro || 0;
+            const guessWins = buildBattle?.wins_guess_the_build || 0;
+            
+            const totalBBWins = buildBattle?.wins || 0;
+            const knownModeWins = soloWins + teamWins + proWins + guessWins;
+            const speedBuilderWins = Math.max(0, totalBBWins - knownModeWins);
+            
+            const totalWins = soloWins + teamWins + proWins;
+            
+            const nameField = username.padEnd(maxNameLength, ' ');
+            const totalField = totalWins.toString().padStart(maxBbLength, ' ');
+            const guessField = guessWins.toString().padStart(maxGtbLength, ' ');
+            const speedField = speedBuilderWins.toString().padStart(maxSbLength, ' ');
+            
+            const totalPart = totalWins >= 1000 ? `<span class="mc-pink">${totalField}</span>` :
+                             totalWins >= 750 ? `<span class="mc-red">${totalField}</span>` :
+                             totalWins >= 500 ? `<span class="mc-orange">${totalField}</span>` :
+                             totalWins >= 250 ? `<span class="mc-yellow">${totalField}</span>` :
+                             totalWins >= 100 ? `<span class="mc-lime">${totalField}</span>` :
+                             totalWins >= 50 ? `<span class="mc-aqua">${totalField}</span>` : totalField;
+            
+            const guessPart = guessWins >= 1000 ? `<span class="mc-pink">${guessField}</span>` :
+                             guessWins >= 750 ? `<span class="mc-red">${guessField}</span>` :
+                             guessWins >= 500 ? `<span class="mc-orange">${guessField}</span>` :
+                             guessWins >= 250 ? `<span class="mc-yellow">${guessField}</span>` :
+                             guessWins >= 100 ? `<span class="mc-lime">${guessField}</span>` :
+                             guessWins >= 50 ? `<span class="mc-aqua">${guessField}</span>` : guessField;
+            
+            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedField}</span>` :
+                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedField}</span>` :
+                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedField}</span>` :
+                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedField}</span>` :
+                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedField}</span>` :
+                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedField}</span>` : speedField;
+            
+            return `<div class="player-row">${nameField} | BB ${totalPart} | GTB ${guessPart} | SB ${speedPart}</div>`;
+        }
+
+        function formatBBScoreStats(username, player, maxNameLength, maxScoreLength, maxSbLength) {
+            const buildBattle = player.stats?.BuildBattle;
+            const score = buildBattle?.score || 0;
+            
+            const soloWins = buildBattle?.wins_solo_normal || 0;
+            const teamWins = buildBattle?.wins_teams_normal || 0;
+            const proWins = buildBattle?.wins_solo_pro || 0;
+            const guessWins = buildBattle?.wins_guess_the_build || 0;
+            const totalBBWins = buildBattle?.wins || 0;
+            const knownModeWins = soloWins + teamWins + proWins + guessWins;
+            const speedBuilderWins = Math.max(0, totalBBWins - knownModeWins);
+            
+            const nameField = username.padEnd(maxNameLength, ' ');
+            const scoreField = score.toString().padStart(maxScoreLength, ' ');
+            const speedField = speedBuilderWins.toString().padStart(maxSbLength, ' ');
+            
+            const scorePart = score >= 200000 ? `<span class="mc-pink">${scoreField}</span>` :
+                             score >= 150000 ? `<span class="mc-red">${scoreField}</span>` :
+                             score >= 100000 ? `<span class="mc-orange">${scoreField}</span>` :
+                             score >= 50000 ? `<span class="mc-yellow">${scoreField}</span>` :
+                             score >= 25000 ? `<span class="mc-lime">${scoreField}</span>` :
+                             score >= 10000 ? `<span class="mc-aqua">${scoreField}</span>` : scoreField;
+            
+            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedField}</span>` :
+                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedField}</span>` :
+                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedField}</span>` :
+                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedField}</span>` :
+                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedField}</span>` :
+                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedField}</span>` : speedField;
+            
+            return `<div class="player-row">${nameField} | ${scorePart} | ${speedField} Wins</div>`;
+        }
+
+        function calculateMaxLengths(validPlayers, channelType) {
+            const actualMaxNameLength = Math.max(...validPlayers.map(p => p.username.length));
+            
+            if (channelType === 'bbScore') {
+                let maxScoreLength = 4, maxSbLength = 1;
+                for (const pData of validPlayers) {
+                    const bb = pData.player.stats?.BuildBattle;
+                    const score = bb?.score || 0;
+                    const soloWins = bb?.wins_solo_normal || 0;
+                    const teamWins = bb?.wins_teams_normal || 0;
+                    const proWins = bb?.wins_solo_pro || 0;
+                    const guessWins = bb?.wins_guess_the_build || 0;
+                    const totalBBWins = bb?.wins || 0;
+                    const knownModeWins = soloWins + teamWins + proWins + guessWins;
+                    const sbWins = Math.max(0, totalBBWins - knownModeWins);
+                    
+                    maxScoreLength = Math.max(maxScoreLength, score.toString().length);
+                    maxSbLength = Math.max(maxSbLength, sbWins.toString().length);
+                }
+                return { actualMaxNameLength, maxScoreLength, maxSbLength };
+            } else if (channelType === 'buildBattle') {
+                let maxBbLength = 1, maxGtbLength = 1, maxSbLength = 1;
+                for (const pData of validPlayers) {
+                    const bb = pData.player.stats?.BuildBattle;
+                    const soloWins = bb?.wins_solo_normal || 0;
+                    const teamWins = bb?.wins_teams_normal || 0;
+                    const proWins = bb?.wins_solo_pro || 0;
+                    const guessWins = bb?.wins_guess_the_build || 0;
+                    const totalBBWins = bb?.wins || 0;
+                    const knownModeWins = soloWins + teamWins + proWins + guessWins;
+                    const sbWins = Math.max(0, totalBBWins - knownModeWins);
+                    
+                    const totalWins = soloWins + teamWins + proWins;
+                    
+                    maxBbLength = Math.max(maxBbLength, totalWins.toString().length);
+                    maxGtbLength = Math.max(maxGtbLength, guessWins.toString().length);
+                    maxSbLength = Math.max(maxSbLength, sbWins.toString().length);
+                }
+                return { actualMaxNameLength, maxBbLength, maxGtbLength, maxSbLength };
+            } else {
+                let maxRankLength = 4;
+                let maxBwLength = 1, maxFkLength = 1, maxFkdrLength = 4;
+                for (const pData of validPlayers) {
+                    const rank = getRankDisplay(pData.player);
+                    maxRankLength = Math.max(maxRankLength, rank.length);
+                    
+                    const bwLevel = getBedwarsLevel(pData.player.stats?.Bedwars?.Experience);
+                    const fk = pData.player.stats?.Bedwars?.final_kills_bedwars || 0;
+                    const fd = pData.player.stats?.Bedwars?.final_deaths_bedwars || 1;
+                    const fkdr = (fk / fd).toFixed(2);
+                    
+                    maxBwLength = Math.max(maxBwLength, bwLevel.toString().length);
+                    maxFkLength = Math.max(maxFkLength, fk.toLocaleString('en-US').length);
+                    maxFkdrLength = Math.max(maxFkdrLength, fkdr.length);
+                }
+                return { actualMaxNameLength, maxRankLength, maxBwLength, maxFkLength, maxFkdrLength };
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
