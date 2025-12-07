@@ -171,16 +171,28 @@
             font-weight: normal;
             font-style: normal;
             line-height: 2.2;
-            white-space: pre;
             overflow-x: auto;
             color: #e5e5e5;
         }
 
         .player-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             padding: 0;
             margin: 0;
             background: none;
             border-radius: 0;
+        }
+        
+        .player-name,
+        .player-rank,
+        .player-stat {
+            display: inline-block;
+        }
+        
+        .stat-separator {
+            color: #666;
         }
 
         .loading {
@@ -445,17 +457,28 @@
                     return;
                 }
 
-                const lengths = calculateMaxLengths(validPlayers, currentMode);
-                
-                // ONLINE: 명령어일 경우 validPlayers만 표시, 아니면 모두 표시
+                // ONLINE: 명령어일 경우 강조된 플레이어만, 아니면 모두 표시
                 const playersToDisplay = isOnlineCommand 
                     ? playerDataList.filter(p => !p.error && isPlayerHighlighted(p.player, currentMode))
                     : playerDataList;
                 
+                // 표시할 플레이어(에러 제외)와 전체 플레이어(에러 포함)로 lengths 계산
+                const validForLengths = playersToDisplay.filter(p => !p.error);
+                const allUsernames = playersToDisplay.map(p => p.username);
+                const lengths = validForLengths.length > 0 
+                    ? calculateMaxLengths(validForLengths, currentMode, allUsernames)
+                    : { actualMaxNameLength: Math.max(...allUsernames.map(n => n.length)), maxRankLength: 4, maxBwLength: 1, maxFkLength: 1, maxFkdrLength: 4 };
+                
                 const results = playersToDisplay.map(pData => {
-                    if (pData.error) return `<div class="player-row">${escapeHtml(pData.username)}: ❌</div>`;
+                    if (pData.error) {
+                        return `<div class="player-row">
+                            <span class="player-name" style="min-width: ${lengths.actualMaxNameLength}ch">${escapeHtml(pData.username)}</span>
+                            <span class="stat-separator">|</span>
+                            <span class="mc-red">❌</span>
+                        </div>`;
+                    }
                     
-                    const nameLength = usernames.length > 1 ? lengths.actualMaxNameLength : pData.username.length;
+                    const nameLength = lengths.actualMaxNameLength;
 
                     if (currentMode === 'bbScore') {
                         return formatBBScoreStats(pData.username, pData.player, nameLength, lengths.maxScoreLength, lengths.maxSbLength);
@@ -729,14 +752,22 @@
             const { bwColor, fkColor, fkdrColor } = getColorForStat(bwLevel, fk, fkdr);
             const nameColor = getNameColor(bwLevel, fk, fkdr);
             
-            const bwPart = bwColor ? `<span class="${bwColor}">${bwField}</span>` : bwField;
-            const fkPart = fkColor ? `<span class="${fkColor}">${fkField}</span>` : fkField;
-            const fkdrPart = fkdrColor ? `<span class="${fkdrColor}">${fkdrField}</span>` : fkdrField;
-            const namePart = nameColor ? `<span class="${nameColor}">${nameField}</span>` : nameField;
+            const bwPart = bwColor ? `<span class="${bwColor}">${bwLevel}</span>` : bwLevel;
+            const fkPart = fkColor ? `<span class="${fkColor}">${fk.toLocaleString('en-US')}</span>` : fk.toLocaleString('en-US');
+            const fkdrPart = fkdrColor ? `<span class="${fkdrColor}">${fkdr.toFixed(2)}</span>` : fkdr.toFixed(2);
+            const namePart = nameColor ? `<span class="${nameColor}">${username}</span>` : username;
             
-            const rankPadding = '&nbsp;'.repeat(Math.max(0, maxRankLength - rank.length));
-            
-            return `<div class="player-row">${namePart} | ${coloredRank}${rankPadding} | ${bwPart}★ | FK ${fkPart} | FKDR ${fkdrPart}</div>`;
+            return `<div class="player-row">
+                <span class="player-name" style="min-width: ${maxNameLength}ch">${namePart}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-rank" style="min-width: ${maxRankLength}ch">${coloredRank}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxBwLength + 1}ch">${bwPart}★</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxFkLength + 3}ch">FK ${fkPart}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxFkdrLength + 5}ch">FKDR ${fkdrPart}</span>
+            </div>`;
         }
 
         function formatBuildBattleStats(username, player, maxNameLength, maxBbLength, maxGtbLength, maxSbLength) {
@@ -757,28 +788,36 @@
             const guessField = guessWins.toString().padStart(maxGtbLength, ' ');
             const speedField = speedBuilderWins.toString().padStart(maxSbLength, ' ');
             
-            const totalPart = totalWins >= 1000 ? `<span class="mc-pink">${totalField}</span>` :
-                             totalWins >= 750 ? `<span class="mc-red">${totalField}</span>` :
-                             totalWins >= 500 ? `<span class="mc-orange">${totalField}</span>` :
-                             totalWins >= 250 ? `<span class="mc-yellow">${totalField}</span>` :
-                             totalWins >= 100 ? `<span class="mc-lime">${totalField}</span>` :
-                             totalWins >= 50 ? `<span class="mc-aqua">${totalField}</span>` : totalField;
+            const totalPart = totalWins >= 1000 ? `<span class="mc-pink">${totalWins}</span>` :
+                             totalWins >= 750 ? `<span class="mc-red">${totalWins}</span>` :
+                             totalWins >= 500 ? `<span class="mc-orange">${totalWins}</span>` :
+                             totalWins >= 250 ? `<span class="mc-yellow">${totalWins}</span>` :
+                             totalWins >= 100 ? `<span class="mc-lime">${totalWins}</span>` :
+                             totalWins >= 50 ? `<span class="mc-aqua">${totalWins}</span>` : totalWins;
             
-            const guessPart = guessWins >= 1000 ? `<span class="mc-pink">${guessField}</span>` :
-                             guessWins >= 750 ? `<span class="mc-red">${guessField}</span>` :
-                             guessWins >= 500 ? `<span class="mc-orange">${guessField}</span>` :
-                             guessWins >= 250 ? `<span class="mc-yellow">${guessField}</span>` :
-                             guessWins >= 100 ? `<span class="mc-lime">${guessField}</span>` :
-                             guessWins >= 50 ? `<span class="mc-aqua">${guessField}</span>` : guessField;
+            const guessPart = guessWins >= 1000 ? `<span class="mc-pink">${guessWins}</span>` :
+                             guessWins >= 750 ? `<span class="mc-red">${guessWins}</span>` :
+                             guessWins >= 500 ? `<span class="mc-orange">${guessWins}</span>` :
+                             guessWins >= 250 ? `<span class="mc-yellow">${guessWins}</span>` :
+                             guessWins >= 100 ? `<span class="mc-lime">${guessWins}</span>` :
+                             guessWins >= 50 ? `<span class="mc-aqua">${guessWins}</span>` : guessWins;
             
-            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedField}</span>` :
-                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedField}</span>` :
-                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedField}</span>` :
-                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedField}</span>` :
-                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedField}</span>` :
-                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedField}</span>` : speedField;
+            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedBuilderWins}</span>` : speedBuilderWins;
             
-            return `<div class="player-row">${nameField} | BB ${totalPart} | GTB ${guessPart} | SB ${speedPart}</div>`;
+            return `<div class="player-row">
+                <span class="player-name" style="min-width: ${maxNameLength}ch">${username}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxBbLength + 3}ch">BB ${totalPart}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxGtbLength + 4}ch">GTB ${guessPart}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxSbLength + 3}ch">SB ${speedPart}</span>
+            </div>`;
         }
 
         function formatBBScoreStats(username, player, maxNameLength, maxScoreLength, maxSbLength) {
@@ -797,25 +836,33 @@
             const scoreField = score.toString().padStart(maxScoreLength, ' ');
             const speedField = speedBuilderWins.toString().padStart(maxSbLength, ' ');
             
-            const scorePart = score >= 200000 ? `<span class="mc-pink">${scoreField}</span>` :
-                             score >= 150000 ? `<span class="mc-red">${scoreField}</span>` :
-                             score >= 100000 ? `<span class="mc-orange">${scoreField}</span>` :
-                             score >= 50000 ? `<span class="mc-yellow">${scoreField}</span>` :
-                             score >= 25000 ? `<span class="mc-lime">${scoreField}</span>` :
-                             score >= 10000 ? `<span class="mc-aqua">${scoreField}</span>` : scoreField;
+            const scorePart = score >= 200000 ? `<span class="mc-pink">${score}</span>` :
+                             score >= 150000 ? `<span class="mc-red">${score}</span>` :
+                             score >= 100000 ? `<span class="mc-orange">${score}</span>` :
+                             score >= 50000 ? `<span class="mc-yellow">${score}</span>` :
+                             score >= 25000 ? `<span class="mc-lime">${score}</span>` :
+                             score >= 10000 ? `<span class="mc-aqua">${score}</span>` : score;
             
-            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedField}</span>` :
-                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedField}</span>` :
-                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedField}</span>` :
-                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedField}</span>` :
-                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedField}</span>` :
-                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedField}</span>` : speedField;
+            const speedPart = speedBuilderWins >= 1000 ? `<span class="mc-pink">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 750 ? `<span class="mc-red">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 500 ? `<span class="mc-orange">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 250 ? `<span class="mc-yellow">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 100 ? `<span class="mc-lime">${speedBuilderWins}</span>` :
+                             speedBuilderWins >= 50 ? `<span class="mc-aqua">${speedBuilderWins}</span>` : speedBuilderWins;
             
-            return `<div class="player-row">${nameField} | ${scorePart} | ${speedField} Wins</div>`;
+            return `<div class="player-row">
+                <span class="player-name" style="min-width: ${maxNameLength}ch">${username}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxScoreLength}ch">${scorePart}</span>
+                <span class="stat-separator">|</span>
+                <span class="player-stat" style="min-width: ${maxSbLength + 5}ch">${speedPart} Wins</span>
+            </div>`;
         }
 
-        function calculateMaxLengths(validPlayers, channelType) {
-            const actualMaxNameLength = Math.max(...validPlayers.map(p => p.username.length));
+        function calculateMaxLengths(validPlayers, channelType, allUsernames = null) {
+            const actualMaxNameLength = allUsernames 
+                ? Math.max(...allUsernames.map(n => n.length))
+                : Math.max(...validPlayers.map(p => p.username.length));
             
             if (channelType === 'bbScore') {
                 let maxScoreLength = 4, maxSbLength = 1;
