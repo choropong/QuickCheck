@@ -17,9 +17,8 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // URL에서 username 추출 (예: /api/uuid/Technoblade)
-    const pathParts = event.path.split('/');
-    const username = pathParts[pathParts.length - 1];
+    // 쿼리 파라미터에서 username 추출
+    const username = event.queryStringParameters?.username;
 
     if (!username) {
         return {

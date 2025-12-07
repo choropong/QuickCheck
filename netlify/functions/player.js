@@ -19,9 +19,8 @@ exports.handler = async (event, context) => {
         };
     }
 
-    // URL에서 UUID 추출 (예: /api/player/uuid123)
-    const pathParts = event.path.split('/');
-    const uuid = pathParts[pathParts.length - 1];
+    // 쿼리 파라미터에서 UUID 추출
+    const uuid = event.queryStringParameters?.uuid;
 
     if (!uuid) {
         return {

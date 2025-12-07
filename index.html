@@ -500,13 +500,19 @@
             try {
                 console.log('Fetching UUID for:', username);
                 
-                // Vercel/Netlify Functions 호환 (쿼리 파라미터 방식도 지원)
+                // Netlify Functions 우선 시도
                 let response;
                 try {
-                    response = await fetch(`/api/uuid?username=${username}`);
+                    response = await fetch(`/.netlify/functions/uuid?username=${encodeURIComponent(username)}`);
+                    if (!response.ok) throw new Error('Netlify function failed');
                 } catch (e) {
-                    // Path 방식으로 재시도 (로컬 server.js용)
-                    response = await fetch(`/api/uuid/${username}`);
+                    // Vercel API 재시도
+                    try {
+                        response = await fetch(`/api/uuid?username=${encodeURIComponent(username)}`);
+                    } catch (e2) {
+                        // 로컬 server.js 재시도
+                        response = await fetch(`/api/uuid/${encodeURIComponent(username)}`);
+                    }
                 }
                 
                 if (!response.ok) {
@@ -532,13 +538,19 @@
             try {
                 console.log('Fetching Hypixel stats for:', uuid);
                 
-                // Vercel/Netlify Functions 호환 (쿼리 파라미터 방식도 지원)
+                // Netlify Functions 우선 시도
                 let response;
                 try {
-                    response = await fetch(`/api/player?uuid=${uuid}`);
+                    response = await fetch(`/.netlify/functions/player?uuid=${encodeURIComponent(uuid)}`);
+                    if (!response.ok) throw new Error('Netlify function failed');
                 } catch (e) {
-                    // Path 방식으로 재시도 (로컬 server.js용)
-                    response = await fetch(`/api/player/${uuid}`);
+                    // Vercel API 재시도
+                    try {
+                        response = await fetch(`/api/player?uuid=${encodeURIComponent(uuid)}`);
+                    } catch (e2) {
+                        // 로컬 server.js 재시도
+                        response = await fetch(`/api/player/${encodeURIComponent(uuid)}`);
+                    }
                 }
                 
                 if (!response.ok) {
