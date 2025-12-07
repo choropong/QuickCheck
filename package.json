@@ -1,0 +1,12 @@
+{
+  "name": "quickcheck-site",
+  "version": "1.0.0",
+  "description": "Hypixel Stats Checker",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'No build needed'"
+  },
+  "keywords": ["hypixel", "minecraft", "stats"],
+  "author": "",
+  "license": "MIT"
+}
