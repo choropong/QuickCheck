@@ -1,6 +1,6 @@
 const https = require('https');
 
-const HYPIXEL_API_KEY = '9431f378-3e25-4290-9e44-1042a7e81110';
+const HYPIXEL_API_KEY = '52f52e6a-d53b-4d80-8730-ab96d3d8a34d';
 
 exports.handler = async (event, context) => {
     // CORS 헤더 설정
