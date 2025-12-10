@@ -2,7 +2,7 @@ const http = require('http');
 const https = require('https');
 const url = require('url');
 
-const HYPIXEL_API_KEY = '52f52e6a-d53b-4d80-8730-ab96d3d8a34d';
+const HYPIXEL_API_KEY = '6644e485-2fa3-4b6d-b18b-228e43dc60ca';
 const PORT = 3000;
 
 const server = http.createServer((req, res) => {
